@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	EtcdAddr = "http://127.0.0.1:2379"
+	EtcdAddr = "http://127.0.0.1:2389"
+	NatsAddr = "http://127.0.0.1:4223"
 )
 
 var (
-	wg    *sync.WaitGroup
-	nodes []Node
+	wg *sync.WaitGroup
 )
 
 func init() {
@@ -34,17 +34,15 @@ func JsonEncode(str string) map[string]interface{} {
 func ServiceNodeRegistry() {
 	serviceNode := NewServiceNode([]string{EtcdAddr}, "dc1")
 	serviceNode.RegisterNode("sfu", "node-name", "nats-channel-test")
-	protoo := nprotoo.NewNatsProtoo(nprotoo.DefaultNatsURL)
+	protoo := nprotoo.NewNatsProtoo(NatsAddr)
 	wg.Add(1)
-	protoo.OnRequest(serviceNode.GetRPCChannel(), func(request map[string]interface{}, accept nprotoo.AcceptFunc, reject nprotoo.RejectFunc) {
-		method := request["method"].(string)
-		data := request["data"].(map[string]interface{})
-		log.Infof("method => %s, data => %v", method, data)
+	protoo.OnRequest(serviceNode.GetRPCChannel(), func(request nprotoo.Request, accept nprotoo.RespondFunc, reject nprotoo.RejectFunc) {
+		log.Infof("method => %s, data => %v", request.Method, request.Data)
 		reject(404, "Not found")
 		wg.Done()
 	})
 
-	protoo.OnBroadcast(serviceNode.GetEventChannel(), func(data map[string]interface{}, subj string) {
+	protoo.OnBroadcast(serviceNode.GetEventChannel(), func(data nprotoo.Notification, subj string) {
 		log.Infof("Got Broadcast subj => %s, data => %v", subj, data)
 		wg.Done()
 	})
@@ -56,14 +54,14 @@ func ServiceNodeRegistry() {
 
 func ServiceNodeWatch() {
 	serviceWatcher := NewServiceWatcher([]string{EtcdAddr}, "dc1")
-	protoo := nprotoo.NewNatsProtoo(nprotoo.DefaultNatsURL)
+	protoo := nprotoo.NewNatsProtoo(NatsAddr)
 	go serviceWatcher.WatchServiceNode("sfu", func(service string, state NodeStateType, node Node) {
 		if state == UP {
 			log.Infof("Service UP [%s] => %v", service, node)
 			req := protoo.NewRequestor(GetRPCChannel(node))
 			wg.Add(1)
 			req.Request("offer", JsonEncode(`{ "sdp": "dummy-sdp"}`),
-				func(result map[string]interface{}) {
+				func(result nprotoo.RawMessage) {
 					log.Infof("offer success: =>  %s", result)
 				},
 				func(code int, err string) {

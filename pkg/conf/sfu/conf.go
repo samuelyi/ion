@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pion/ion/pkg/rtc"
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +22,7 @@ var (
 	Log     = &cfg.Log
 	Etcd    = &cfg.Etcd
 	Nats    = &cfg.Nats
+	Router  = &cfg.Router
 )
 
 func init() {
@@ -39,6 +41,7 @@ type global struct {
 
 type JitterBuffer struct {
 	On            bool `mapstructure:"on"`
+	TCCOn         bool `mapstructure:"tccon"`
 	REMBCycle     int  `mapstructure:"rembcycle"`
 	PLICycle      int  `mapstructure:"plicycle"`
 	MaxBandwidth  int  `mapstructure:"maxbandwidth"`
@@ -88,13 +91,14 @@ type rtp struct {
 }
 
 type config struct {
-	Global  global  `mapstructure:"global"`
-	Plugins plugins `mapstructure:"plugins"`
-	WebRTC  webrtc  `mapstructure:"webrtc"`
-	Rtp     rtp     `mapstructure:"rtp"`
-	Log     log     `mapstructure:"log"`
-	Etcd    etcd    `mapstructure:"etcd"`
-	Nats    nats    `mapstructure:"nats"`
+	Global  global           `mapstructure:"global"`
+	Router  rtc.RouterConfig `mapstructure:"router"`
+	Plugins plugins          `mapstructure:"plugins"`
+	WebRTC  webrtc           `mapstructure:"webrtc"`
+	Rtp     rtp              `mapstructure:"rtp"`
+	Log     log              `mapstructure:"log"`
+	Etcd    etcd             `mapstructure:"etcd"`
+	Nats    nats             `mapstructure:"nats"`
 	CfgFile string
 }
 

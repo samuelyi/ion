@@ -1,131 +1,90 @@
-# ION
 
-ION is a distributed RTC system written by pure go and flutter
+<div align=left><a href="https://github.com/pion/ion/wiki">
+    <img src="https://github.com/pion/ion/raw/master/docs/imgs/ion.png" width = 15% align = "left">
+</a>
 
-[![Financial Contributors on Open Collective](https://opencollective.com/pion-ion/all/badge.svg?label=financial+contributors)](https://opencollective.com/pion-ion) [![Build Status](https://travis-ci.com/pion/ion.svg?branch=master)](https://travis-ci.com/pion/ion)
-![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-[![slack](https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen)](https://pion.ly/slack)
-[![Go Report Card](https://goreportcard.com/badge/github.com/pion/ion)](https://goreportcard.com/report/github.com/pion/ion)
+#### *ION is a distributed real-time communication system, the goal is to chat anydevice, anytime, anywhere!*
 
-## 
+![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)[![Build Status](https://travis-ci.com/pion/ion.svg?branch=master)](https://travis-ci.com/pion/ion)[![Go Report Card](https://goreportcard.com/badge/github.com/pion/ion)![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pion/ion)![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/pion/ion?include_prereleases)](https://goreportcard.com/report/github.com/pion/ion)![Docker Pulls](https://img.shields.io/docker/pulls/pionwebrtc/ion-biz?style=plastic)[![Financial Contributors on Open Collective](https://opencollective.com/pion-ion/all/badge.svg?label=financial+contributors)](https://opencollective.com/pion-ion) ![GitHub contributors](https://img.shields.io/github/contributors-anon/pion/ion)![Twitter Follow](https://img.shields.io/twitter/follow/_PION?style=social)[![slack](https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen)](https://pion.ly/slack)
 
-<img src="docs/imgs/ion.jpg" width = "20%" />
+<br />
+
+## ❤️Sponsor to help this awsome project go faster！🚀
+(https://opencollective.com/pion-ion)
+
+You can vote for feature if you are a sponsor.
+
+Features: https://github.com/pion/ion/projects/1
+
+## Quick-Start (*LOCALHOST ONLY*)
+
+*NOTE:* Do not attempt to run this example on a VPS. Make sure you [read the docs](docs/production); WebRTC requires some specific network configuration for the SFU service (depending on your host), and the JavaScript `GetUserMedia()` API can only request camera access on pages with SSL (or `localhost`). If you are not running on `localhost`, you MUST configure networking for SFU and enable HTTPS for `ion-app-web`.
 
 
-## Wiki
+#### 1. Run Ion Backend Services
+After cloning the folder, create a docker network (we use this so `ion-app-web` can communicate securely with the backend):
+```
+docker network create ionnet
 
-https://github.com/pion/ion/wiki
+docker-compose up
+```
+
+#### 3. Expose Ports
+
+Ensure the ports `5000-5200/udp` are exposed or forwarded for the SFU service; 
+
+
+#### 4. UI (optional)
+
+Head over to [Ion Web App](https://github.com/pion/ion-app-web) to bring up the front end.
+
+The web app repo also contains examples of exposing the ion biz websocket via reverse proxy with automatic SSL.
+
+For dev and more options see the wiki
+
+* [Development](https://github.com/pion/ion/tree/master/docs)
+
+
+
+## Documentation
++ [Development](docs/dev/)
+    + [Quick Start](docs/dev/quick_start.md)
+    + [Docker Compose](docs/dev/docker.md)
+    + [Debugging](docs/dev/debugging.md)
++ [Production](docs/production/)
+    + [Docker Compose](docs/production/README.md)
+    + [Kubernetes](kube/README.md)
+    + [Stress Test](docs/production/stress_test.md)
++ [Server](docs/server_features.md)
++ [Clients](docs/client_features.md)
++ Ion SDKs
+    + [SDK - Javascript](https://github.com/pion/ion-sdk-js)
+    + [SDK - Flutter](https://github.com/pion/ion-sdk-flutter)
++ Open-Source ION Clients
+    + [Ion Web App](https://github.com/pion/ion-app-web)
+    + [Ion Flutter App](https://github.com/pion/ion-app-flutter)
++ Other Ion Projects
+    + [Ion Load Tool](https://github.com/pion/ion-load-tool)
+
+
++ [Glossary / Definitions](docs/glossary.md)
++ [Frequently Asked Questions](docs/faq.md)
 
 ## Architecture
-
 ![arch](https://github.com/pion/ion/raw/master/docs/imgs/arch.png)
-
-## Contributing
-
-- [adwpc](https://github.com/adwpc) - _Original Author - ion server_
-- [cloudwebrtc](https://github.com/cloudwebrtc) - _Original Author - ion server and client sdk_
-- [kangshaojun](https://github.com/kangshaojun) - _Contributor UI - flutter and react.js_
-- [Sean-Der](https://github.com/Sean-Der) - _ion server and docker file_ 
-- [sashaaro](https://github.com/sashaaro) - _docker file_
-- [tarrencev](https://github.com/tarrencev) - _audio video process_
 
 ## Roadmap
 
 [Projects](https://github.com/pion/ion/projects/1)
-Welcome contributing to ion!
 
-## Stars
+## Maintainers
 
-[![Stargazers over time](https://starchart.cc/pion/ion.svg)](https://starchart.cc/pion/ion)
+<a href="https://github.com/adwpc"><img width="60" height="60" src="https://github.com/adwpc.png?size=500"/></a><a href="https://github.com/cloudwebrtc"><img width="60" height="60" src="https://github.com/cloudwebrtc.png?size=500"/></a><a href="https://github.com/kangshaojun"><img width="60" height="60" src="https://github.com/kangshaojun.png?size=500"/></a><a href="https://github.com/tarrencev"><img width="60" height="60" src="https://github.com/tarrencev.png?size=500"/></a><a href="https://github.com/jbrady42"><img width="60" height="60" src="https://github.com/jbrady42.png?size=500"/></a><a href="https://github.com/leewardbound"><img width="60" height="60" src="https://github.com/leewardbound.png?size=500"/></a>
 
-# Screenshots
+## Contributors
 
-## iOS/Android
+<a href="https://github.com/pion/ion/graphs/contributors"><img src="https://opencollective.com/pion-ion/contributors.svg?width=890&button=false" /></a>
 
-<img width="180" height="370" src="screenshots/flutter/flutter-01.jpg"/> <img width="180" height="370" src="screenshots/flutter/flutter-02.jpg"/> <img width="180" height="370" src="screenshots/flutter/flutter-03.jpg"/>
+*Original Author: [adwpc](https://github.com/adwpc) [cloudwebrtc](https://github.com/cloudwebrtc)*
 
-## PC/HTML5
-
-<img width="360" height="265" src="screenshots/web/ion-01.jpg"/> <img width="360" height="265" src="screenshots/web/ion-02.jpg"/>
-<img width="360" height="265" src="screenshots/web/ion-04.jpg"/> <img width="360" height="265" src="screenshots/web/ion-05.jpg"/>
-
-## How to use
-
-### Local Deployment
-#### 1. Clone
-```
-git clone https://github.com/pion/ion
-```
-
-#### 2. Run
-Firstly pull images. Skip this command if you want build images locally
-```
-docker-compose pull
-```
-
-```
-docker-compose up
-```
-
-#### 3. Chat!
-Open this url with chrome
-
-```
-http://localhost:8080
-```
-
-### Online Deployment
-
-#### 1. Clone
-
-```
-git clone https://github.com/pion/ion
-```
-
-#### 2. Set Env
-
-```
-export WWW_URL=yourdomain
-export ADMIN_EMAIL=yourname@yourdomain
-```
-
-#### 3. Configure docker compose
-
-Enable production ports and Caddy file for web service in `docker-compose.yml`.
-
-#### 4. Expose Ports
-
-Ensure the following ports are exposed or forwarded.
-
-```
-80/tcp
-443/tcp
-5000-5200/udp
-```
-
-#### 5. Run
-
-```
-docker-compose up
-```
-
-#### 6. Chat!
-
-Open this url with chrome
-
-```
-https://yourdomain
-```
-
-### Docker Tips
-
-The provided docker-compose works for deploying to open usage, and can also be used for local development. It also supports auto-generate of certificates via LetsEncrypt.
-
-It accepts the following enviroment variables.
-
-* `WWW_URL` -- Public URL if auto-generating certificates
-* `ADMIN_EMAIL`  -- Email if auto-generating certificates
-
-To run on `conference.pion.ly` you would run `WWW_URL=conference.pion.ly ADMIN_EMAIL=admin@pion.ly docker-compose up`
-
-If `WWW_URL` is set you will access via `https://yourip:8080` OR `http://yourip:8080` if not running with TLS enabled.
+*Community Hero: [Sean-Der](https://github.com/Sean-Der)*

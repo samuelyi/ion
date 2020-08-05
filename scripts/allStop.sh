@@ -26,14 +26,16 @@ do
 done
 
 # run command
-echo "------------etcd--------------"
-$APP_DIR/scripts/etcdStop.sh
+# echo "------------etcd--------------"
+# $APP_DIR/scripts/etcdStop.sh
 
-echo "------------nats-server--------------"
-$APP_DIR/scripts/natsStop.sh
+# echo "------------nats-server--------------"
+# $APP_DIR/scripts/natsStop.sh
 
-echo "------------redis--------------"
-$APP_DIR/scripts/redisStop.sh
+# echo "------------redis--------------"
+# $APP_DIR/scripts/redisStop.sh
+
+docker-compose stop nats redis etcd
 
 echo "------------islb--------------"
 $APP_DIR/scripts/islbStop.sh
@@ -44,8 +46,6 @@ $APP_DIR/scripts/bizStop.sh
 echo "------------sfu--------------"
 $APP_DIR/scripts/sfuStop.sh
 
-echo "------------web--------------"
-$APP_DIR/scripts/webStop.sh
 echo "--------------------------"
 
 

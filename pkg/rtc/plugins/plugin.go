@@ -35,15 +35,17 @@ type Config struct {
 }
 
 type PluginChain struct {
-	pub        transport.Transport
+	mid        string
 	plugins    []Plugin
 	pluginLock sync.RWMutex
 	stop       bool
 	config     Config
 }
 
-func NewPluginChain() *PluginChain {
-	return &PluginChain{}
+func NewPluginChain(mid string) *PluginChain {
+	return &PluginChain{
+		mid: mid,
+	}
 }
 
 func (p *PluginChain) ReadRTP() *rtp.Packet {
@@ -98,6 +100,7 @@ func (p *PluginChain) Init(config Config) error {
 	if config.RTPForwarder.On {
 		log.Infof("PluginChain.Init config.RTPForwarder.On=true config=%v", config.RTPForwarder)
 		config.RTPForwarder.ID = TypeRTPForwarder
+		config.RTPForwarder.MID = p.mid
 		p.AddPlugin(TypeRTPForwarder, NewRTPForwarder(config.RTPForwarder))
 	}
 
@@ -106,11 +109,19 @@ func (p *PluginChain) Init(config Config) error {
 		if i == 0 {
 			continue
 		}
-		go func() {
-			for pkt := range p.plugins[i-1].ReadRTP() {
-				plugin.WriteRTP(pkt)
+		go func(i int, plugin Plugin) {
+			if p.stop {
+				return
 			}
-		}()
+
+			for pkt := range p.plugins[i-1].ReadRTP() {
+				err := plugin.WriteRTP(pkt)
+
+				if err != nil {
+					log.Errorf("Plugin Forward Packet error => %+v", err)
+				}
+			}
+		}(i, plugin)
 	}
 
 	if p.GetPluginsTotal() <= 0 {

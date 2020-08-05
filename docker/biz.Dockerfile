@@ -1,4 +1,4 @@
-FROM golang:1.13.7-stretch
+FROM golang:1.14.5-stretch
 
 ENV GO111MODULE=on
 
@@ -13,9 +13,12 @@ COPY cmd/ $GOPATH/src/github.com/pion/ion/cmd
 WORKDIR $GOPATH/src/github.com/pion/ion/cmd/biz
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /biz .
 
-FROM alpine:3.9.5
+FROM alpine:3.12.0
 
 RUN apk --no-cache add ca-certificates
 COPY --from=0 /biz /usr/local/bin/biz
 
+COPY configs/docker/biz.toml /configs/biz.toml
+
 ENTRYPOINT ["/usr/local/bin/biz"]
+CMD ["-c", "/configs/biz.toml"]

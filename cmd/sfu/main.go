@@ -43,6 +43,7 @@ func init() {
 		On: conf.Plugins.On,
 		JitterBuffer: plugins.JitterBufferConfig{
 			On:            conf.Plugins.JitterBuffer.On,
+			TCCOn:         conf.Plugins.JitterBuffer.TCCOn,
 			REMBCycle:     conf.Plugins.JitterBuffer.REMBCycle,
 			PLICycle:      conf.Plugins.JitterBuffer.PLICycle,
 			MaxBandwidth:  conf.Plugins.JitterBuffer.MaxBandwidth,
@@ -60,6 +61,7 @@ func init() {
 		panic(err)
 	}
 	rtc.InitPlugins(pluginConfig)
+	rtc.InitRouter(*conf.Router)
 }
 
 func main() {
@@ -80,6 +82,6 @@ func main() {
 
 	rpcID := serviceNode.GetRPCChannel()
 	eventID := serviceNode.GetEventChannel()
-	sfu.Init(conf.Global.Dc, serviceNode.NodeInfo().ID, rpcID, eventID, conf.Nats.URL)
+	sfu.Init(conf.Global.Dc, serviceNode.NodeInfo().Info["id"], rpcID, eventID, conf.Nats.URL)
 	select {}
 }

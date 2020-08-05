@@ -18,18 +18,15 @@ func TestRTPEngineAcceptAndRead(t *testing.T) {
 	}
 
 	go func() {
-		for {
-			select {
-			case rtpTransport := <-connCh:
-				fmt.Println("accept new conn from connCh", rtpTransport.RemoteAddr().String())
-				go func() {
-					for {
-						// must read otherwise can't get new conn
-						pkt, _ := rtpTransport.ReadRTP()
-						fmt.Println("read rtp", pkt)
-					}
-				}()
-			}
+		for rtpTransport := range connCh {
+			fmt.Println("accept new conn from connCh", rtpTransport.RemoteAddr().String())
+			go func(rtpTransport *transport.RTPTransport) {
+				for {
+					// must read otherwise can't get new conn
+					pkt, _ := rtpTransport.ReadRTP()
+					fmt.Println("read rtp", pkt)
+				}
+			}(rtpTransport)
 		}
 	}()
 
@@ -42,7 +39,10 @@ func TestRTPEngineAcceptAndRead(t *testing.T) {
 		rtp := &rtp.Packet{}
 		rtpTransport := transport.NewOutRTPTransport("awsome", "0.0.0.0:6789")
 		if err := rtp.Unmarshal(rawPkt); err == nil {
-			rtpTransport.WriteRTP(rtp)
+			err = rtpTransport.WriteRTP(rtp)
+			if err != nil {
+				fmt.Println("rtpTransport.WriteRTP ", err)
+			}
 		} else {
 			fmt.Println("rtpTransport.WriteRTP ", err)
 		}
@@ -56,18 +56,15 @@ func TestRTPEngineAcceptKCPAndRead(t *testing.T) {
 		t.Fatal("TestRTPEngineAcceptKCPAndRead ", err)
 	}
 	go func() {
-		for {
-			select {
-			case rtpTransport := <-connCh:
-				fmt.Println("accept new conn over kcp from connCh", rtpTransport.RemoteAddr().String())
-				go func() {
-					for {
-						// must read otherwise can't get new conn
-						pkt, _ := rtpTransport.ReadRTP()
-						fmt.Println("read rtp over kcp", pkt)
-					}
-				}()
-			}
+		for rtpTransport := range connCh {
+			fmt.Println("accept new conn over kcp from connCh", rtpTransport.RemoteAddr().String())
+			go func(rtpTransport *transport.RTPTransport) {
+				for {
+					// must read otherwise can't get new conn
+					pkt, _ := rtpTransport.ReadRTP()
+					fmt.Println("read rtp over kcp", pkt)
+				}
+			}(rtpTransport)
 		}
 	}()
 
@@ -80,7 +77,10 @@ func TestRTPEngineAcceptKCPAndRead(t *testing.T) {
 		rtp := &rtp.Packet{}
 		rtpTransport := transport.NewOutRTPTransportWithKCP("awsome", "0.0.0.0:1234", "key", "salt")
 		if err := rtp.Unmarshal(rawPkt); err == nil {
-			rtpTransport.WriteRTP(rtp)
+			err = rtpTransport.WriteRTP(rtp)
+			if err != nil {
+				fmt.Println("rtpTransport.WriteRTP ", err)
+			}
 		} else {
 			fmt.Println("rtpTransport.WriteRTP ", err)
 		}
@@ -89,8 +89,7 @@ func TestRTPEngineAcceptKCPAndRead(t *testing.T) {
 }
 
 func TestWebRTCTransportP2P(t *testing.T) {
-	options := make(map[string]interface{})
-	options["codec"] = "vp8"
+	options := transport.RTCOptions{Codec: "VP8"}
 
 	// new pub
 	pub := transport.NewWebRTCTransport("pub", options)
@@ -99,7 +98,7 @@ func TestWebRTCTransportP2P(t *testing.T) {
 	}
 
 	// pub add track
-	_, err := pub.AddTrack(476325762, webrtc.DefaultPayloadTypeVP8, "video", "pion")
+	_, err := pub.AddSendTrack(476325762, webrtc.DefaultPayloadTypeVP8, "video", "pion")
 	if err != nil {
 		t.Fatalf("pub.AddTrack err=%v", err)
 	}
@@ -114,8 +113,7 @@ func TestWebRTCTransportP2P(t *testing.T) {
 	sub := transport.NewWebRTCTransport("sub", options)
 
 	// sub answer offer
-	options = make(map[string]interface{})
-	options["publish"] = "true"
+	options = transport.RTCOptions{Publish: true}
 	answer, err := sub.Answer(offer, options)
 	if err != nil {
 		t.Fatalf("err=%v answer=%v", err, answer)

@@ -13,7 +13,7 @@ import (
 
 func init() {
 	log.Init(conf.Log.Level)
-	signal.Init(conf.Signal.Host, conf.Signal.Port, conf.Signal.Cert, conf.Signal.Key, biz.Entry)
+	signal.Init(conf.Signal.Host, conf.Signal.Port, conf.Signal.Cert, conf.Signal.Key, conf.Signal.AllowDisconnected, biz.Entry)
 }
 
 func close() {
@@ -26,7 +26,10 @@ func main() {
 	if conf.Global.Pprof != "" {
 		go func() {
 			log.Infof("Start pprof on %s", conf.Global.Pprof)
-			http.ListenAndServe(conf.Global.Pprof, nil)
+			err := http.ListenAndServe(conf.Global.Pprof, nil)
+			if err != nil {
+				panic(err)
+			}
 		}()
 	}
 

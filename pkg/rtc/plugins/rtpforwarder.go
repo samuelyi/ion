@@ -10,6 +10,7 @@ import (
 // RTPForwarderConfig .
 type RTPForwarderConfig struct {
 	ID      string
+	MID     string
 	On      bool
 	Addr    string
 	KcpKey  string
@@ -19,16 +20,25 @@ type RTPForwarderConfig struct {
 // RTPForwarder core
 type RTPForwarder struct {
 	id         string
+	stop       bool
 	Transport  *transport.RTPTransport
 	outRTPChan chan *rtp.Packet
 }
 
 // NewRTPForwarder Create new RTP Forwarder
 func NewRTPForwarder(config RTPForwarderConfig) *RTPForwarder {
-	log.Infof("New RTPForwarder Plugin with id %s address %s", config.ID, config.Addr)
+	log.Infof("New RTPForwarder Plugin with id %s address %s for mid %s", config.ID, config.Addr, config.MID)
+	var rtpTransport *transport.RTPTransport
+
+	if config.KcpKey != "" && config.KcpSalt != "" {
+		rtpTransport = transport.NewOutRTPTransportWithKCP(config.MID, config.Addr, config.KcpKey, config.KcpSalt)
+	} else {
+		rtpTransport = transport.NewOutRTPTransport(config.MID, config.Addr)
+	}
+
 	return &RTPForwarder{
 		id:         config.ID,
-		Transport:  transport.NewOutRTPTransportWithKCP(config.ID, config.Addr, config.KcpKey, config.KcpSalt),
+		Transport:  rtpTransport,
 		outRTPChan: make(chan *rtp.Packet, maxSize),
 	}
 }
@@ -40,8 +50,18 @@ func (r *RTPForwarder) ID() string {
 
 // WriteRTP Forward rtp packet which from pub
 func (r *RTPForwarder) WriteRTP(pkt *rtp.Packet) error {
+	if r.stop {
+		return nil
+	}
+
 	r.outRTPChan <- pkt
-	return r.Transport.WriteRTP(pkt)
+	go func() {
+		err := r.Transport.WriteRTP(pkt)
+		if err != nil {
+			log.Errorf("r.Transport.WriteRTP => %s", err)
+		}
+	}()
+	return nil
 }
 
 // ReadRTP Forward rtp packet which from pub
@@ -51,5 +71,6 @@ func (r *RTPForwarder) ReadRTP() <-chan *rtp.Packet {
 
 // Stop Stop plugin
 func (r *RTPForwarder) Stop() {
+	r.stop = true
 	r.Transport.Close()
 }

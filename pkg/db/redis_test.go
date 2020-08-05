@@ -12,9 +12,9 @@ var (
 	db     *Redis
 	dc     = "dc1"
 	node   = "sfu1"
-	room   = "room1"
-	uid    = "uuid-xxxxx-xxxxx-xxxxx-xxxxx"
-	mid    = uid + "#" + "ABCDEF"
+	room   = proto.RID("room1")
+	uid    = proto.UID("uuid-xxxxx-xxxxx-xxxxx-xxxxx")
+	mid    = proto.MID("mid-xxxxx-xxxxx-xxxxx-xxxxx")
 	msid0  = "pion audio"
 	msid1  = "pion video"
 	track0 = proto.TrackInfo{Ssrc: 3694449886, Payload: 111, Type: "audio", ID: "aid0"}
@@ -26,13 +26,23 @@ var (
 	uikey = "info"
 	uinfo = `{"name": "Guest"}`
 
-	mkey = proto.BuildMediaInfoKey(dc, room, node, mid)
-	ukey = proto.BuildUserInfoKey(dc, room, uid)
+	mkey = proto.MediaInfo{
+		DC:  dc,
+		NID: node,
+		RID: room,
+		UID: uid,
+		MID: mid,
+	}.BuildKey()
+	ukey = proto.UserInfo{
+		DC:  dc,
+		RID: room,
+		UID: uid,
+	}.BuildKey()
 )
 
 func init() {
 	cfg := Config{
-		Addrs: []string{":6379"},
+		Addrs: []string{":6380"},
 		Pwd:   "",
 		DB:    0,
 	}
@@ -46,7 +56,10 @@ func TestRedisStorage(t *testing.T) {
 		t.Error(err)
 	}
 	t.Logf("HSet Track %s, %s => %s\n", mkey, field, value)
-	db.HSet(mkey, field, value)
+	err = db.HSet(mkey, field, value)
+	if err != nil {
+		t.Error(err)
+	}
 
 	tracks = []proto.TrackInfo{track1, track2}
 	field, value, err = proto.MarshalTrackField(msid1, tracks)
@@ -54,24 +67,36 @@ func TestRedisStorage(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Printf("HSet Track %s, %s => %s\n", mkey, field, value)
-	db.HSet(mkey, field, value)
+	err = db.HSet(mkey, field, value)
+	if err != nil {
+		t.Error(err)
+	}
 
 	field, value, err = proto.MarshalNodeField(node0)
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Printf("HSet Node %s, %s => %s\n", mkey, field, value)
-	db.HSet(mkey, field, value)
+	err = db.HSet(mkey, field, value)
+	if err != nil {
+		t.Error(err)
+	}
 
 	field, value, err = proto.MarshalNodeField(node1)
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Printf("HSet Node %s, %s => %s\n", mkey, field, value)
-	db.HSet(mkey, field, value)
+	err = db.HSet(mkey, field, value)
+	if err != nil {
+		t.Error(err)
+	}
 
 	fmt.Printf("HSet UserInfo %s, %s => %s\n", ukey, uikey, uinfo)
-	db.HSet(ukey, uikey, uinfo)
+	err = db.HSet(ukey, uikey, uinfo)
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestRedisRead(t *testing.T) {

@@ -8,14 +8,12 @@ import (
 
 const (
 	// client to ion
-	ClientLogin       = "login"
 	ClientJoin        = "join"
 	ClientLeave       = "leave"
 	ClientPublish     = "publish"
 	ClientUnPublish   = "unpublish"
 	ClientSubscribe   = "subscribe"
 	ClientUnSubscribe = "unsubscribe"
-	ClientClose       = "close"
 	ClientBroadcast   = "broadcast"
 	ClientTrickleICE  = "trickle"
 
@@ -39,50 +37,66 @@ const (
 	IslbOnStreamRemove = ClientOnStreamRemove
 	IslbOnBroadcast    = ClientBroadcast
 
+	// SFU Endpoints
 	SFUTrickleICE   = ClientTrickleICE
 	SFUStreamRemove = ClientOnStreamRemove
 
 	IslbID = "islb"
 )
 
+type MID string
+type RID string
+type UID string
+
 /*
 media
-dc/room1/media/pub/${mid}
+dc/${nid}/${rid}/${uid}/media/pub/${mid}
 
 node1 origin
 node2 shadow
 msid  [{ssrc: 1234, pt: 111, type:audio}]
 msid  [{ssrc: 5678, pt: 96, type:video}]
 */
+type MediaInfo struct {
+	DC  string `json:"dc,omitempty"`  //Data Center ID
+	NID string `json:"nid,omitempty"` //Node ID
+	RID RID    `json:"rid,omitempty"` //Room ID
+	UID UID    `json:"uid,omitempty"` //User ID
+	MID MID    `json:"mid,omitempty"` //Media ID
+}
 
-func BuildMediaInfoKey(dc string, rid string, nid string, mid string) string {
-	strs := []string{dc, rid, nid, "media", "pub", mid}
+func (m MediaInfo) BuildKey() string {
+	if m.DC == "" {
+		m.DC = "*"
+	}
+	if m.NID == "" {
+		m.NID = "*"
+	}
+	if m.RID == "" {
+		m.RID = "*"
+	}
+	if m.UID == "" {
+		m.UID = "*"
+	}
+	if m.MID == "" {
+		m.MID = "*"
+	}
+	strs := []string{m.DC, m.NID, string(m.RID), string(m.UID), "media", "pub", string(m.MID)}
 	return strings.Join(strs, "/")
 }
 
-type MediaInfo struct {
-	DC  string //Data Center ID
-	RID string //Room ID
-	NID string //Node ID
-	MID string //Media ID
-	UID string //User ID
-}
-
-// dc1/room1/sfu-tU2GInE5Lfuc/media/pub/7e97c1e8-c80a-4c69-81b0-27efc83e6120#NYYQLV
+// Parse dc1/sfu-tU2GInE5Lfuc/7485294b-9815-4888-83a5-631e77445b67/room1/media/pub/7e97c1e8-c80a-4c69-81b0-27efc83e6120
 func ParseMediaInfo(key string) (*MediaInfo, error) {
 	var info MediaInfo
 	arr := strings.Split(key, "/")
-	if len(arr) != 6 {
+	if len(arr) != 7 {
 		return nil, fmt.Errorf("Can‘t parse mediainfo; [%s]", key)
 	}
 	info.DC = arr[0]
-	info.RID = arr[1]
-	info.NID = arr[2]
-	info.MID = arr[5]
-	arr = strings.Split(info.MID, "#")
-	if len(arr) == 2 {
-		info.UID = arr[0]
-	}
+	info.NID = arr[1]
+	info.RID = RID(arr[2])
+	info.UID = UID(arr[3])
+	info.MID = MID(arr[6])
 	return &info, nil
 }
 
@@ -92,15 +106,15 @@ user
 info {name: "Guest"}
 */
 
-func BuildUserInfoKey(dc string, rid string, uid string) string {
-	strs := []string{dc, rid, "user", "info", uid}
-	return strings.Join(strs, "/")
-}
-
 type UserInfo struct {
 	DC  string
-	RID string
-	UID string
+	RID RID
+	UID UID
+}
+
+func (u UserInfo) BuildKey() string {
+	strs := []string{u.DC, string(u.RID), "user", "info", string(u.UID)}
+	return strings.Join(strs, "/")
 }
 
 func ParseUserInfo(key string) (*UserInfo, error) {
@@ -110,8 +124,8 @@ func ParseUserInfo(key string) (*UserInfo, error) {
 		return nil, fmt.Errorf("Can‘t parse userinfo; [%s]", key)
 	}
 	info.DC = arr[0]
-	info.RID = arr[1]
-	info.UID = arr[4]
+	info.RID = RID(arr[1])
+	info.UID = UID(arr[4])
 	return &info, nil
 }
 
@@ -166,10 +180,6 @@ func UnmarshalTrackField(key string, value string) (string, *[]TrackInfo, error)
 	return msid, &tracks, nil
 }
 
-func GetUIDFromMID(mid string) string {
-	return strings.Split(mid, "#")[0]
-}
-
 func GetPubNodePath(rid, uid string) string {
 	return rid + "/node/pub/" + uid
 }
@@ -183,17 +193,4 @@ func GetPubMediaPath(rid, mid string, ssrc uint32) string {
 
 func GetPubMediaPathKey(rid string) string {
 	return rid + "/media/pub/"
-}
-
-func GetRIDMIDUIDFromMediaKey(key string) (string, string, string) {
-	//room1/media/pub/74baff6e-b8c9-4868-9055-b35d50b73ed6#LUMGUQ/11111
-	strs := strings.Split(key, "/")
-	if len(strs) < 2 {
-		return "", "", ""
-	}
-	strss := strings.Split(strs[3], "#")
-	if len(strss) < 2 {
-		return "", "", ""
-	}
-	return strs[0], strs[3], strss[0]
 }

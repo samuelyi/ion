@@ -9,6 +9,7 @@ import (
 	"github.com/cloudwebrtc/go-protoo/peer"
 	"github.com/cloudwebrtc/go-protoo/server"
 	"github.com/pion/ion/pkg/log"
+	"github.com/pion/ion/pkg/proto"
 )
 
 type AcceptFunc peer.AcceptFunc
@@ -22,13 +23,14 @@ const (
 )
 
 var (
-	bizCall  func(method string, peer *Peer, msg json.RawMessage, accept RespondFunc, reject RejectFunc)
-	wsServer *server.WebSocketServer
-	rooms    = make(map[string]*Room)
-	roomLock sync.RWMutex
+	bizCall               func(method string, peer *Peer, msg json.RawMessage, accept RespondFunc, reject RejectFunc)
+	wsServer              *server.WebSocketServer
+	rooms                 = make(map[proto.RID]*Room)
+	roomLock              sync.RWMutex
+	allowClientDisconnect bool
 )
 
-func Init(host string, port int, cert, key string, bizEntry func(method string, peer *Peer, msg json.RawMessage, accept RespondFunc, reject RejectFunc)) {
+func Init(host string, port int, cert, key string, allowDisconnected bool, bizEntry func(method string, peer *Peer, msg json.RawMessage, accept RespondFunc, reject RejectFunc)) {
 	wsServer = server.NewWebSocketServer(in)
 	config := server.DefaultConfig()
 	config.Host = host
@@ -37,6 +39,7 @@ func Init(host string, port int, cert, key string, bizEntry func(method string, 
 	config.KeyFile = key
 	config.HTMLRoot = "web"
 	bizCall = bizEntry
+	allowClientDisconnect = allowDisconnected
 	go wsServer.Bind(config)
 	go stat()
 }

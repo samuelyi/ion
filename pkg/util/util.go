@@ -1,7 +1,6 @@
 package util
 
 import (
-	"bytes"
 	"encoding/json"
 	"math/rand"
 	"net"
@@ -14,14 +13,27 @@ import (
 
 	nprotoo "github.com/cloudwebrtc/nats-protoo"
 	"github.com/pion/ion/pkg/log"
-	"github.com/pion/rtp"
 	"github.com/pion/stun"
-	"github.com/pion/webrtc/v2"
 )
 
 var (
 	localIPPrefix = [...]string{"192.168", "10.0", "169.254", "172.16"}
 )
+
+// KvOK check flag and value
+func KvOK(m map[string]interface{}, k, v string) bool {
+	str := ""
+	val, ok := m[k]
+	if ok {
+		str, ok = val.(string)
+		if ok {
+			if strings.EqualFold(str, v) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func IsLocalIP(ip string) bool {
 	for i := 0; i < len(localIPPrefix); i++ {
@@ -144,11 +156,11 @@ func Val(msg map[string]interface{}, key string) string {
 	if val == nil {
 		return ""
 	}
-	switch val.(type) {
+	switch val := val.(type) {
 	case string:
-		return val.(string)
+		return val
 	case map[string]interface{}:
-		return Marshal(val.(map[string]interface{}))
+		return Marshal(val)
 	default:
 		log.Errorf("util.Val val=%v", val)
 		return ""
@@ -165,26 +177,6 @@ func Map(args ...interface{}) map[string]interface{} {
 		msg[args[2*i].(string)] = args[2*i+1]
 	}
 	return msg
-}
-
-func GetIDFromRTP(pkt *rtp.Packet) string {
-	if !pkt.Header.Extension || len(pkt.Header.ExtensionPayload) < 36 {
-		log.Warnf("pkt invalid extension")
-		return ""
-	}
-	return string(bytes.TrimRight(pkt.Header.ExtensionPayload, "\x00"))
-}
-
-func SetIDToRTP(pkt *rtp.Packet, id string) *rtp.Packet {
-	pkt.Header.Extension = true
-
-	//the payload must be in 32-bit words and bigger than extPayload
-	if len(pkt.Header.ExtensionPayload)%4 != 0 || len(pkt.Header.ExtensionPayload) < len(id) {
-		n := 4 * (len(id)/4 + 1)
-		pkt.Header.ExtensionPayload = make([]byte, n)
-	}
-	copy(pkt.Header.ExtensionPayload, id)
-	return pkt
 }
 
 func GetIP(addr string) string {
@@ -216,23 +208,6 @@ func GetLostSN(begin, bitmap uint16) []uint16 {
 
 func GetMills() int64 {
 	return time.Now().UnixNano() / 1e6
-}
-
-func IsVideo(pt uint8) bool {
-	if pt == webrtc.DefaultPayloadTypeVP8 ||
-		pt == webrtc.DefaultPayloadTypeVP9 ||
-		pt == webrtc.DefaultPayloadTypeH264 {
-		return true
-	}
-	return false
-}
-
-func ReadAbsSendTime(pkt *rtp.Packet) (uint32, bool) {
-	if !pkt.Extension && len(pkt.ExtensionPayload) != 3 {
-		log.Errorf("ReadAbsSendTime pkt.Extension=%v len(pkt.Extension)=%d profile=%v", pkt.Extension, len(pkt.ExtensionPayload), pkt.ExtensionProfile)
-		return 0, false
-	}
-	return uint32(pkt.ExtensionPayload[2]) | uint32(pkt.ExtensionPayload[1])<<8 | uint32(pkt.ExtensionPayload[0])<<16, true
 }
 
 func StrToUint8(str string) uint8 {

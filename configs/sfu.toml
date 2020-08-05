@@ -5,11 +5,20 @@ dc = "dc1"
 # internet ip
 addr = "127.0.0.1"
 
+[router]
+# pass bandwidth feeback to pub
+rembfeedback = false
+# Cap bandwidth feedback
+minbandwidth = 100000
+maxbandwidth = 5000000
+
 [plugins]
 on = true
 
 [plugins.jitterbuffer]
 on = true
+# transport-cc (experiment feature)
+tccon = false
 # the remb cycle sending to pub, this told the pub it's bandwidth
 rembcycle = 2
 # pli cycle sending to pub, and pub will send a key frame
@@ -52,7 +61,7 @@ level = "info"
 # level = "debug"
 [etcd]
 # ["ip:port", "ip:port"]
-addrs = ["127.0.0.1:2379"]
+addrs = ["127.0.0.1:2389"]
 
 [nats]
-url = "nats://127.0.0.1:4222"
+url = "nats://127.0.0.1:4223"
